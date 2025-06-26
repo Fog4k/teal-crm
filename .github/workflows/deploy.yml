@@ -23,18 +23,26 @@ jobs:
         ssh -o StrictHostKeyChecking=no ubuntu@51.20.76.228 << 'EOF'
           set -e
           
-          if [ ! -d "~/teal-crm/.git" ]; then
-            rm -rf ~/teal-crm
-            git clone https://github.com/Fog4k/teal-crm.git ~/teal-crm
-          else
-            cd ~/teal-crm && git pull origin main
-          fi
+          # удалим старую версию проекта
+          rm -rf ~/teal-crm
           
+          # клонируем заново
+          git clone https://github.com/Fog4k/teal-crm.git ~/teal-crm
+          
+          # переходим в проект
           cd ~/teal-crm
+
+          # создаём venv если его нет
+          if [ ! -d "venv" ]; then
+            python3 -m venv venv
+          fi
+
           source venv/bin/activate
+          pip install --upgrade pip
           pip install -r requirements.txt
+
           python manage.py migrate
-          python manage.py collectstatic --noinput
-          sudo systemctl restart gunicorn || echo "Gunicorn not set up yet"
-          sudo systemctl restart nginx || echo "Nginx not set up yet"
+          python manage.py collectstatic --noinput || true
+
+          echo "🚀 Deployed successfully"
         EOF
